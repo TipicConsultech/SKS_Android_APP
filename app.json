@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "SKS",
+    "slug": "sks",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/iconx.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/iconx.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/iconx.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.abhijeetpatale.SKS",
+      "usesCleartextTraffic": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/iconx.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "58b7f9ea-867b-45e1-ac9a-3313e21dc8cd"
+      },
+      "router": {
+        "origin": false
+      }
+    },
+    "owner": "dheraj"
+  }
+}
