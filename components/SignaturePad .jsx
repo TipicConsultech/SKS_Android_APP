@@ -6,8 +6,7 @@ import Signature from 'react-native-signature-canvas';
 
 const SignaturePad = ({ onOK,onClose }) => {
   const ref = useRef();
-  console.log(ref);
-console.log("signature pad open");
+
   const handleClear = () => {
     ref?.current?.clearSignature();
     onClose();

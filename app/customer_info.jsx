@@ -266,7 +266,6 @@
 
 // const saveDraft = () => {
 //     // Your logic to save the draft
-//     console.log("Draft saved!");
 // };
 //  const [customer,setCustomer]=useState({});
 //  const [equipment,setEquipment]=useState({});
@@ -291,7 +290,6 @@
 //   const [error, setError] = useState("");
 
 //   const [isModalVisible, setIsModalVisible] = useState(false);
-//   // console.log(isModalVisible);
   
 
 //   const [errord, setErrord] = useState("");
@@ -304,7 +302,6 @@
 
 //   const [callType, setCallType] = useState(null); // State to store selected call type
 
-//   // console.log(callType);
   
 //   const [selectedOptionRemark, setSelectedOptionRemark] = useState(null);
 
@@ -390,7 +387,6 @@
 //         const response = await post("/api/getEquipmentByName", {
 //           search: text,
 //         });
-//         console.log(response);
 //         // const data = await response.json();
 
 //         if (response) {
@@ -428,8 +424,6 @@
 //     setSelectedsno(item.serial_no)
 //   };
 
-//   // console.log(filteredEqpData);
-//   // console.log(filteredData);
 
 //   const handleAddItem = () => {
 //     setIsVisible(!isVisible); // Show the table when the button is clicked
@@ -489,8 +483,6 @@
 //         pathname: 'reportPage',
 //         params: { equipmentData:JSON.stringify(equipment),reportData:JSON.stringify(reportData),customreData:JSON.stringify(customer),itemData:JSON.stringify(itemsTable) }, // Pass data as string
 //       });
-//       console.log(itemsTable);
-
 //       setSearchQuery("");
 //       setFilteredData([]);
 //       setIsCustomerSelected(false);
@@ -524,7 +516,6 @@
 //             data={filteredData}
 //             keyExtractor={(item) => item.id.toString()} // Use a unique key, like id
 //             renderItem={({ item }) => {
-//               // console.log(item); // Ensure logging for debugging
 //               return (
 //                 <TouchableOpacity onPress={() => handleSelectItem(item)}>
 //                   <Text

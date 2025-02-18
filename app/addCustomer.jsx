@@ -49,7 +49,7 @@ const AddCustomer = () => {
 }, []);
  
 const saveDraft=()=>{
-  console.log('saved');
+  // console.log('saved');
   
 }
 

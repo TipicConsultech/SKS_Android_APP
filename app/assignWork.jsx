@@ -326,8 +326,7 @@ const CustomerInfo = () => {
 
 
 const saveDraft = () => {
-    // Your logic to save the draft
-    console.log("Draft saved!");
+    
 };
  const [customer,setCustomer]=useState({});
  const [equipment,setEquipment]=useState({});
@@ -356,7 +355,7 @@ const saveDraft = () => {
   const [searchEqpQuery, setSearchEqpQuery] = useState("");
   const [selectedEqpItem, setSelectedEqpItem] = useState(null);
   const [sEquipment, setSEquipment] = useState({});
-console.log('sEquipment', sEquipment);
+
   
   const [selectedEquipmentName, setSelectedEquipmentName] = useState("");
   const [selectedEquipment, setSelectedEquipment] = useState("");
@@ -479,8 +478,6 @@ console.log('sEquipment', sEquipment);
   }; 
   
   const handleValueChange = (selectedId) => {
-    console.log(selectedId);
-    
     if (selectedId === "Add") {
       setIsModalVisible(true); // Trigger modal for adding new equipment
       setSelectedEquipment(null); // Clear selection
@@ -507,9 +504,6 @@ console.log('sEquipment', sEquipment);
     // If the input is not empty, proceed with fetching data
     try {
       const response = await post("/api/allUser",{ search: text });
-
-      console.log(response); // Check the response from the API
-
       if (Array.isArray(response)) {
         setFilteredUser(response); // Update with filtered data if response is an array
       } else {
@@ -547,15 +541,10 @@ console.log('sEquipment', sEquipment);
     setAssignedUser(item);
    setFilteredUser([]); // Clear the suggestion list
   };
-  // console.log('Good',filteredEqpData);
 
   
   
   const handleSubmit = async () => {
-    console.log("customer is", customer);
-    console.log("equipment is", equipment);
-    console.log("assigned user is", assignedUser);
-  
     const assignedTo =
       userData.type === 0 && assignedUser && assignedUser.id
         ? assignedUser.id
@@ -605,9 +594,6 @@ console.log('sEquipment', sEquipment);
   };
   
   const handleSubmitNext = async () => {
-    console.log("customer is", customer);
-    console.log("equipment is", equipment);
-    console.log("assigned user is", assignedUser);
   
     const assignedTo =
       userData.type === 0 && assignedUser && assignedUser.id
@@ -639,8 +625,7 @@ console.log('sEquipment', sEquipment);
   
     try {
       const response = await post("/api/report", data);
-      console.log("huooh",response);
-  
+    
       if (response.report && response.report.id !== null) {
         setIsModalVisible(false);
         routeToDetails("/details", response.report.id, 0); // Navigate to details with report number and remark
@@ -720,7 +705,6 @@ console.log('sEquipment', sEquipment);
             data={filteredData}
             keyExtractor={(item) => item.id.toString()} // Use a unique key, like id
             renderItem={({ item }) => {
-              // console.log(item); // Ensure logging for debugging
               return (
                 <TouchableOpacity onPress={() => handleSelectItem(item)}>
                   <Text
@@ -893,7 +877,7 @@ console.log('sEquipment', sEquipment);
 
      {userData.type===0 &&
      (<TextInput
-        placeholder="Assign User"
+        placeholder="Assign Service Engineer"
          variant="outlined"
         style={styles.searchInput}
         value={searchUser}

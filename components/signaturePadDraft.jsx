@@ -5,9 +5,9 @@
 import { TextInput } from '@react-native-material/core';
  
  const DraftSignaturePad = ({ onOK,onClose,customerName,setCustomerName}) => {
-   const ref = useRef();
-   console.log(ref);
- console.log("signature pad open");
+
+    const ref = useRef();
+
    const handleClear = () => {
      ref?.current?.clearSignature();
      onClose();

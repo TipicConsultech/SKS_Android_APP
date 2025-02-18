@@ -23,8 +23,6 @@ const LoginScreen = () => {
   const [setModalVisible] = useState(false);
   const backgroundImage = require('../assets/images/main.jpg'); // Replace with your image path
  
-  //const ss = getToken();
-   //console.log(ss);
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -75,9 +73,7 @@ const LoginScreen = () => {
         // Alert.alert('responce is :',JSON.stringify(response));
         if (response.token) {
           await storeToken(response.token); 
-          console.log("respone from Server " + response.token);
           const tokenfromget = await getToken();
-          console.log("respone from Storage " + tokenfromget);
           
          await storeUserData(response);  // show user Information
            // Store token in AsyncStorage
@@ -100,7 +96,6 @@ const LoginScreen = () => {
 
 
   // const handleForgotPassword = () => {
-  //   console.log('Forgot password email submitted:', ForgotPassword);
   //   setModalVisible;
   //   router.push('./');
   // };

@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet, FlatList, Image, Button, Alert, BackHandler } from 'react-native';
-import * as Print from 'expo-print';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { ScrollView, View, Text, StyleSheet, FlatList, Image, Button, Alert, BackHandler, KeyboardAvoidingView ,Modal} from 'react-native';
+// import * as Print from 'expo-print';
+// import * as FileSystem from 'expo-file-system';
+// import * as Sharing from 'expo-sharing';
 import yourImage from '../assets/images/logo.png'; 
 import { useLocalSearchParams,useRouter} from 'expo-router';
-import { getAPICall } from './util/api';
+import { getAPICall, post } from './util/api';
 import skslogo from './util/logo';
 import { getUser } from './util/asyncStorage';
 import { cinzelFont } from './util/font';
 import { router } from "expo-router";
+
+import DraftSignaturePad from '../components/signaturePadDraft';
+import { useNavigation } from '@react-navigation/native';
 
 
 const FinalReport = () => {
@@ -24,12 +27,18 @@ const FinalReport = () => {
   const [sparePartsDataLenght, setSparePartsDataLength] = useState(0);
   const [serviceEngineer,setServiceEngg]=useState(null);
   const [remark, setRemark] = useState('loading..');
-
-const {reportNumber} = useLocalSearchParams();
-
+  /////
+  const [isSigned, setIsSigned] = useState(false);
+  const [signPadVisible, setSignPadVisible] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  //////
+  const {reportNumber} = useLocalSearchParams();
+  /////
+  const navigation = useNavigation();
+  
  useEffect(() => {
     const backAction = () => {
-        router.push('./profile')
+      navigation.goBack();
         return true; // Prevent default behavior
     };
 
@@ -159,723 +168,34 @@ const [user, setUser] = useState();
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
-  const createAndSharePDF = async () => {
-    
-    const customerName = truncateString(reportData1.customer_name, 40);
-    const address = truncateString(reportData1.address, 40);
-    const Locations = truncateString(reportData1.location, 35);
-    const natureComplaint = truncateString(reportDetailsData.nature_complaint, 370);
-    const actualFault = truncateString(reportDetailsData.actual_fault, 370);
-    const actionTaken = truncateString(reportDetailsData.action_taken, 370);
-    const customerSuggestion = truncateString(reportDetailsData.customer_suggestion,370);
-      
-    const htmlContent=`
-    <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Report</title>
-    <style>
-    <style>
-    @font-face {
-      font-family: 'Cinzel';
-      src:url("data:font/ttf;base64,${cinzelFont}") format('truetype');
-    }
-      body {
-        font-family:'Calibri';
-        margin: 10px;
-        color: #333;
-        padding:15px;
-      }
-      .border {
-        border: 2px solid black;
-        padding: 0px;
-        margin: 5px;
-           }
-      .header {
-    display: flex;
-   height: 108px;
-    justify-content: space-between;
-    border-bottom: 1px solid #000;
-    padding-bottom: 0px;
-    margin-top: 0px;
-  }
-  
-  .header img {
-    width: 20%;
-    height: 80px;
-    margin-right: 10px;
-    object-fit: contain;
-  }
-  .commonBorder {
-      border: 10px solid black;
-      
-      margin: 10px 0;
-      background-color: #f9f9f9; 
-    }
-  
-  .headerTextContainer {
-    width: 100%;
-     margin-left: 30px;
-     margin-top: 7px;
-  }
-  
-  
-  
-  .title, .subTitle, .titlemo {
-    text-align: center;
-    margin-bottom: 0px; /* Removes default bottom margin */
-  }
-  
-  .title {
-    font-size: 22px;
-    font-weight: bold;
-    font-family: 'Cinzel';
-  }
-  
-  .subTitle {
-    font-size: 10px;
-    margin-top: 5px; /* Adds a small top margin for spacing */
-  }
-  
-  .titlemo {
-    font-size: 10px;
-    margin-bottom: 8px; /* Adds a small top margin for spacing */
-  }
-  
-  .surTitle {
-    font-size: 12px;
-    text-align: center;
-    border: 1px solid black;
-    margin: -10px auto 10px auto;
-    padding: 5px;
-    width: 150px;
-    background-color: white;
-  }
+     async function handleOnSign(sign){
+     const data={
+      "signature":sign,
+      "signature_by":customerName,
+      "demo_report_id":reportData1?.id,
+      "demo_report_details_id":reportDetailsData?.id,
+     };
      
-     .horizontalContainer {
-    margin-bottom: 10px;
-  }
-
-  .headerRightContainer {
-    width:80%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-   
-  }
-     .horizontalItem {
-    width: 100%; /* Full width to ensure content fits nicely */
-    /* border: 1px solid black; */
-   padding: 10px;
-   /* border-top: none; */
-    display: flex;
-    flex-direction: column; /* Stack items vertically */
-    gap: 10px; /* Space between labels and values */
-    /* margin-left: none; */
-    border-right: 1px solid black;
-  
+      try{
+        const response =await post('/api/FinalReportByDraft',data)
+       setCustomerName('');
     
-  }
-  .horizontalItems2 {
-    width: 100%; /* Full width to ensure content fits nicely */
-    /* border: 1px solid black;  */
-   padding: 10px;
-   border-top: none;
-    display: flex;
-    flex-direction: column; /* Stack items vertically */
-    gap: 10px; /* Space between labels and values */
-    margin-right:none;
-    
-  }
-  .horizontalItemtop {
-        width: 60%;
-        float:right;
-        float: left;
-        border-left: 1px solid black;
-        padding: 2px 10px;
-        display: flex;
-        justify-content: space-between;
-      } 
-  .horizontalItemtop2 {
-        width: 60%;
-        float:right;
-        float: left;
-        border: 1px solid black;
-        border-left:1px solid black;
-        border-bottom: none;
-        border-right: none;
-        padding: 2px 10px;
-        display: flex;
-        justify-content: space-between;
-      }
-      .label{
-        font-size: 10px;
-        font-weight: bold;
-      }
-        .labeltop {
-        font-size: 15px;
-        font-weight: bold;
-      }
-      .value {
-        font-size: 10px;
-        font-weight: bold;
-        color: #555;
-          margin-left: 20px;
-      }
-      .valuetop {
-        font-size: 15px;
-        font-weight: bold;
-        color: #555;
-      }
-   
-      .surTitle {
-        font-size: 12px;
-        text-align: center;
-        font-weight: bold;
-        /* border: 1px solid black; */
-        margin: -14px auto ;
-        width: 150px;
-        margin-bottom: 0px;
-  
-        background-color: white;
-        position: relative; /* or 'absolute' if you want to position it more freely */
-    z-index: 999;       /* Ensures the div is above other elements */
-    overflow: hidden;    
-      }
-      /* .section {
-        margin-bottom: 5px;
-        padding-bottom: 5px;
-      } */
-     
-       .borderContainera {
-        /* border: 1px solid #ccc; */
-       /* border-left:1px solid black; */
-       border: 1px solid black;
-        margin-bottom: 1px;
-        margin-left: -1px;
-        padding: 2px;
-        margin-right:-1px;
-         background-color: #d3d3d3;
-      }
-       .sectionContainer {
-      width:50%; /* Half-width for customer and equipment sections */
-    }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1px;
-      }
-      /* Spare Parts Table */
-      .tableContainer {
-        margin-top: 1px;
-        background-color: white;
-        height: 190px; /* Set the fixed height */
-        overflow-y: auto;
-      }
-      .sectionHeader {
-        font-size: 12px;
-        border-top:1px solid black;
-        font-weight: bold;
-        text-align:start;
-        padding:3px 5px;
-        background-color: #d3d3d3;
-        
-        margin-bottom: 2px;       
-        border-bottom: 1.5px solid #000;
-      }
-      .tableHeader, .tableRow {
-      display: flex;
-      
-      margin: -2px;
-      border: 1px solid black;
-      border-top: none;
-  }
-  
-  .tableHeader div {
-  font-size: 10px;
-      border-left: 1px solid black;
-       font-weight: bold;
-      text-align: center;
-      padding: 5px; /* Optional for spacing */
-  }
-    .tableRow div {
-  font-size: 10px;
-      border-left: 1px solid black;
-      text-align: center;
-      padding: 5px; /* Optional for spacing */
-  }
-  
-  .tableHeader div:nth-child(1), /* Item */
-  .tableRow div:nth-child(1),
-  .tableHeader div:nth-child(3), /* Qty */
-  .tableRow div:nth-child(3),
-  .tableHeader div:nth-child(4), /* Remarks */
-  .tableRow div:nth-child(4) {
-      flex: 1; /* Equal space */
-  }
-  
-  /* Give more space to the Description column */
-  .tableHeader div:nth-child(2), /* Description */
-  .tableRow div:nth-child(2) {
-      flex: 3; /* Double the space */
-  }
-      .signature_byContainer {
-        margin-top: -1px;
-        border-top: 1px solid black;
-      }
-      .signature_byBox {
-        display: flex;
-        /* border-left:1px solid black; */
-        
-        justify-content: space-between;
-      }
-      .signature_byPlaceholder {
-        flex:1;
-        border: 1px solid black;
-        height: 80px;
-        display: flex;
-        justify-content: center;
-        border-left:none;
-        align-items: center;
-        margin: -1px;
-      }
-         .signature_byname {
-        flex: 1;
-        border: 1px solid black;
-        border-top:none;
-        border-bottom:none;
-  
-        /* border-right:none; */
-        border-left:none;
-        /* border-top: 5px; */
-        height: 25px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-         margin-left: -1px;  /* Add left margin */
-              margin-right: -1px; 
-         
-      }
-      .namePlaceholder span {
-        color: #bbb;
-      }
-       
-     
-     
-      .label {
-    font-size: 12px;
-    font-weight: bold;
-    color: #333;
-    margin: 0;
-  }
-     .label1 {
-    font-size: 12px;
-    font-weight: bold;
-    color: #333;
-    margin: 0;
-    
-  }
-    
-  .value {
-    align-items:left;
-    font-size: 10px;
-    font-weight: bold;
-    color: #555;
-    /* margin-right: 100px; */
-  }
-  .valueb {
-        font-size: 12px;
-        font-weight: bold;
-        color: #555;
-        margin-right: 10px;
-        padding-left: 10px;
-        height: 40px; /* Set the fixed height */
-        overflow-y: auto;
-        }
-
-        
-
-    
-     .sectionContainer {
-    display: flex;
-    justify-content: space-between;
-    /* gap: 10px; Space between sections */
-  }
-  /* .applyFlex {
-    
-      display: flex; /* Space between the two sections */
-     */
-      .customerDetails{
-    padding-top:11px;
-    width: 50%;
-    /* border-top:none; */
-  }
-  .equipmentDetails {
-    padding-top:11px;
-    width: 50%;
-     
-  }
-  /* .equipmentDetails{
-      
-  } */
-  
-      .borderContainer {
-        
-        /* margin-left: -4px;
-        margin-right: -4px;
-        
-        margin-bottom: 1px; */
-        display: flex; 
-      }
-      .row {
-        display: flex;
-        margin-bottom: 1px;
-       
-      }
-      .row1 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-right: -10px;
-  padding-left: 10px;
-  margin-left: -10px;
-  margin-bottom: 1px;
-  padding-bottom: 1px;
-  position: relative; /* Required for positioning the pseudo-element */
-}
-
-.row1::before {
-  content: '';
-  position: absolute;
-  top: -4px; /* Adjust as needed to position above the element */
-  left: 0;
-  right: 0;
-  height: 1px; /* Line thickness */
-  background-color: black; /* Line color */
-}
-
-
-  .row6 {
-  display: flex;
-  padding-left: 10px;
-  align-items: center;
-  justify-content: space-between;
-  margin-right: -10px;
-  margin-left: -10px;
-  margin-bottom: 1px;
-  padding-bottom: 1px;
-  position: relative; /* Required for positioning pseudo-element */
-}
-
-.row6::before {
-  content: '';
-  position: absolute;
-  top: 0; /* Position above the element */
-  left: 0;
-  right: 0;
-  height: 1px; /* Thickness of the line */
- 
-}
-
-    .row7 {
-  display: flex;
-  padding-left: 10px;
-  align-items: center;
-  justify-content: space-between;
-  margin-right: -10px;
-  margin-left: -10px;
-  margin-bottom: 1px;
-  padding-top: 10px;
-  padding-bottom: 1px;
-  position: relative; /* Required for pseudo-element positioning */
-}
-
-.row7::before {
-  content: '';
-  position: absolute;
-  top: 0; /* Adjust to move border */
-  left: 0;
-  right: 0;
-  height: 1px; /* Border thickness */
- 
-}
-
-        logo: {
-      width: 10,
-      height: 10,
+       }
+        catch(e){
+       }
+      // setIsSigned(true);
+      setSignPadVisible(false);
+      router.push('./profile');
     };
-
-
-
-   .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: #333;
-      color: white;
-      text-align: center;
-      padding: 10px 0;
-    }
-    </style>
-  </head>
-  <body style="margin-top:20px;">
-    <div class="border">
-      <div class="header">
-     
-      <img src="data:image/png;base64, ${skslogo}" style="width: 150px; height: 120px; margin-left: 28px;" alt="skslogo" />
-        
-        <!-- Header Text Container -->
-        <div class="headerTextContainer">
-          <p class="title">SMART KITCHEN SOLUTIONS</p>
-          <p class="subTitle">Office No 23, Konark Business Center, Mundhwa Pune - 411036</p>
-          <p class="titlemo">Contact No: 8600516230 / 8076614258</p>
-        </div>
-        
-        <!-- Report Number and id -->
-        <div class="headerRightContainer">
-          <div class="horizontalItemtop">
-            <p class="labeltop">Report No:<span style="padding-left:7px; font-size:18px;">${reportData1.id}</span></p>
-          </div>
-          <div class="horizontalItemtop2">
-            <p class="labeltop">Date:</p>
-            </br>
-            <p class="valuetop">${formattedDate}</p>
-          </div>
-        </div>
-      </div>
-  <div>
-      <p class="surTitle">SERVICE REPORT</p>
   
+    const handleCloseSign = () => {
       
-      <!-- Customer Details -->
-     <!-- Customer Details -->
-     <!-- Wrapper for Customer and Equipment Details with Shared Border -->
-  <div class="borderContainer">
-    
-      <!-- Customer Details Section -->
-      <div class="customerDetails sectionContainer" >
-        <div class="horizontalItem customerInfo">
-          <div>
-            <div class="row">
-            <p class="label">Customer Name:<span style="padding-left: 8px;">${customerName}</span> </p>
-        
-             
-            </div>
-          </div>
-          <div>
-            <div class="row">
-            <p class="label">Address:<span style="padding-left: 50px;">${address}</span> </p>
-            
-            </div>
-          </div>
-         <div class="row">
-          <p class="label">Contact Number:<span style="padding-left: 7px;">${reportData1.mobile}</span></p>
-         
-        </div>
-        <div class="row">
-          <p class="label">Contact Person:<span style="padding-left: 12px;">${reportData1.contact_person}</span> </p>
-      
-        </div>
-        </div>
-      </div>
-  
-      <!-- Equipment Details Section -->
-      <div class="customerDetails sectionContainer" style="position: relative;">
-        <div class="horizontalItems2">
-          <div class="row">
-            <p class="label">Type of Call:<span style="padding-left: 33px;">${callTypeString(reportData1.call_type)} </span></p>
-            
-          </div>
-          <div class="row1">
-            <p class="label">Model / PNC:<span style="padding-left: 30px;">${reportData1.model}</span></p>
-       
-          </div>
-          <div class="row1">
-            <p class="label">Serial No:<span style="padding-left: 45px;">${reportData1.serial_no}</span></p>
-         
-          </div>
-          <div class="row1">
-            <p class="label">Equipment Name:<span style="padding-left: 5px;">${reportData1.equipment_name}</span></p>
-            
-          </div>
-          <div class="row1">
-            <p class="label1">Location:<span style="padding-left: 47px;"> ${Locations}</span></p>
-            
-          </div>
-        </div>
-      </div>
-   
-  </div>
-   </div>
-      <!-- Nature of Complaint and Final Status -->
-      
-       <div class="section">
-        <div class="borderContainera">
-          <div class="row">
-            <p class="label">Nature of Complaint:</p>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class=>
-          <div class="row">
-          <p class="valueb">${natureComplaint}</p>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="borderContainera">
-          <div class="row">
-            <p class="label">Actual Fault:</p>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class=>
-          <div class="row">
-          <p class="valueb">${actualFault}</p>
-          </div>
-        </div>
-      </div>
-       <div class="section">
-        <div class="borderContainera">
-          <div class="row">
-            <p class="label">Action Taken/To be taken:</p>
-           
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class=>
-          <div class="row">
-         <p class="valueb">${actionTaken}</p>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="borderContainera">
-          <div class="row">
-            <p class="label">Final Status:</p>
-           
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class=>
-          <div class="row">
-         <p class="valueb">${remarkString(reportDetailsData.remark)}</p>
-          </div>
-        </div>
-      </div>
-        
-        <div class="section">
-        <div class="borderContainera">
-          <div class="row">
-            <p class="label">Finally Status:</p>
-            
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class=>
-          <div class="row">
-      <p class="valueb">${customerSuggestion}</p>
-          </div>
-        </div>
-      </div>
-  
-   <!-- Spare Parts Used -->
- <div class="tableContainer">
-  <p class="sectionHeader">Required or Replaced Spare Parts</p>
-
-  <div class="tableHeader">
-    <div>Item</div>
-    <div>Description</div>
-    <div>Qty</div>
-    <div>Remarks</div>
-  </div>
-
-  <!-- Dynamic Table Rows -->
-  ${Array.from({ length: 8 }).map((_, index) => {
-    const part = sparePartsData1[index] || {};
-    return `
-      <div class="tableRow">
-        <div>${index + 1}</div>  
-        <div>${part.description || ''}</div>
-        <div>${part.qty || ''}</div>
-        <div>${part.remark || ''}</div>
-      </div>
-    `;
-  }).join('')}
-</div>
-
-  
-      <!-- name Section -->
-   <div class="signature_byContainer">
-        <div class="signature_byBox">
-          <div class="signature_byname"> <p class="label">Signature By:</p>
-              <p class="value">${reportDetailsData.signature_by}</p></div>
-          <div class="signature_byname"><p class="label">Service Engg Id:</p>
-              <p class="value">${serviceEngineer.id}</p></div>    
-        </div>
-         <div class="signature_byBox">
-         <div class="signature_byPlaceholder">
-          <img src="${reportDetailsData.signature}" style="width: 126px; height: 70px;" alt="Signature" />
-       </div>
-          <div class="signature_byPlaceholder"><span>${serviceEngineer.name} </span></div>
-        
-        </div>
-      </div>
-       
-
-    </div>
-  </body>
+      setSignPadVisible(false);
+    };
  
-  </html>
-  
-    `;
-
-      try {
-        // Create the PDF
-        const { uri } = await Print.printToFileAsync({ html: htmlContent });
-        const fileUri = FileSystem.documentDirectory + `report_${reportData1.id}_${remarkString(reportData1.remark)}.pdf`;
-  
-        // Move the created PDF to the document directory
-        await FileSystem.moveAsync({
-          from: uri,
-          to: fileUri,
-        });
-  
-        // Check if sharing is available
-        if (!(await Sharing.isAvailableAsync())) {
-          Alert.alert('Sharing is not available on this platform');
-          return;
-        }
-  
-        // Share the PDF
-        await Sharing.shareAsync(fileUri);
-      } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'Failed to create or share PDF');
-      }
-    };
-
-  // Convert image to base64 when the component is mounted
-  useEffect(() => {
-    const convertImageToBase64 = async () => {
-      const base64 = await FileSystem.readAsStringAsync(
-        FileSystem.assetUriAsync(yourImage),
-        { encoding: FileSystem.EncodingType.Base64 }
-      );
-      setImageBase64(base64);
-    };
-
-    convertImageToBase64();
-  }, []);
-
+    function signButton(){
+      setSignPadVisible(true);
+    }
   return (
     <View style={styles.border}>
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -899,13 +219,13 @@ const [user, setUser] = useState();
       <View style={styles.horizontalContainer}>
       
         <View style={styles.horizontalItemtop}>
-          <Text style={styles.labeltop}>Report No:</Text>
+          <Text style={styles.labeltop}>Temp Token (Draft):</Text>
           {reportData1!==null ? <Text style={styles.valuetop}>{reportData1.id}</Text> : <Text style={styles.valuetop}>Loading...</Text>}
           {/* <Text style={styles.valuetop}>{reportData1.id}</Text> */}
           
         </View>
         <View style={styles.horizontalItemtop}>
-          <Text style={styles.labeltop}>Date:</Text>
+          <Text style={styles.labeltop}>Assigned On:</Text>
           {/* <Text style={styles.valuetop}>{reportData.id}</Text> */}
           {reportData1!==null ? <Text style={styles.valuetop}> { formattedDate} </Text> : <Text style={styles.valuetop}>Loading...</Text>}
           {/* <Text style={styles.labeltop}> Time:</Text>
@@ -1077,26 +397,25 @@ const [user, setUser] = useState();
       {/* signature_by Section with Empty Boxes */}
       <View style={styles.signature_byContainer}>
       <View style={styles.signbox}>
-      <Text style={styles.label}>Signed By:</Text>  
+      {/* <Text style={styles.label}>Signed By:</Text>  
       {/* <Text style={styles.value}>{reportData.customer_name}</Text> */}
-      {reportDetailsData!==null ? <Text style={styles.value}>{reportDetailsData.signature_by}</Text> : <Text style={styles.value}>Loading...</Text>}
+      {/* {reportDetailsData!==null ? <Text style={styles.value}>{reportDetailsData.signature_by}</Text> : <Text style={styles.value}>Loading...</Text>}        */}
       
-      <Text style={styles.label}>Service Engg:</Text>
       {/* <Text style={styles.value}>{reportData.contact_person}</Text> */}
-      {serviceEngineer!==null ? <Text style={styles.value}>{serviceEngineer.id}</Text> : <Text style={styles.value}>Loading...</Text>}
+      {serviceEngineer!==null ? <Text style={styles.serviceEngg}>Service Engineer Id: &nbsp; &nbsp; {serviceEngineer?.id}</Text> : <Text style={styles.serviceEngg}>Service Engg: &nbsp; &nbsp;Loading...</Text>}
 
         </View>
         <View style={styles.signature_byBox}>
         
           {/* Placeholder for signature_by images */}
-          <View style={styles.signature_byPlaceholder}>
+          {/* <View style={styles.signature_byPlaceholder}>
           <Image 
             source={{ uri: reportDetailsData?.signature }}
            style={{ width: 180, height: 100 }}
             />
-          </View>
+          </View> */}
           <View style={styles.signature_byPlaceholder}>
-      {serviceEngineer!==null ? <Text style={styles.signature_byText}>{serviceEngineer.name}</Text> : <Text style={styles.signature_byText}>signature_by ...... </Text>}
+      {serviceEngineer!==null ? <Text style={styles.signature_byText}>Service Engg Name:&nbsp; &nbsp;{serviceEngineer.name}</Text> : <Text style={styles.signature_byText}>signature_by ...... </Text>}
             
 
             {/* <Image 
@@ -1110,10 +429,19 @@ const [user, setUser] = useState();
 
     </ScrollView>
     <Button 
-  title="Save and Share PDF" 
+  title="Click Here For Sign" 
   // onPress={sparePartsDataLenght > 7 ? createAPdfTwoPages : createAndSharePDF} 
-  onPress={createAndSharePDF} 
+  onPress={signButton} 
 />
+<Modal transparent={true}  visible={signPadVisible} animationType="slide" presentationStyle="overFullScreen">
+  <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    <View style={styles.modalBackground}>
+      <View style={styles.modalContainerSign}>
+        <DraftSignaturePad onOK={handleOnSign} onClose={handleCloseSign} customerName={customerName} setCustomerName={setCustomerName} />
+      </View>
+    </View>
+  </KeyboardAvoidingView>
+</Modal>
     </View>
   );
 };
@@ -1123,8 +451,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     backgroundColor: '#fff',
-
+    zIndex: -10,
   },
+
+  modalContainerSign:{
+    width: '100%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    zIndex: 10,
+    elevation: 10,
+  },
+
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Makes modal background translucent
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1230,10 +576,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
+    
+  },
+  serviceEngg: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+    // marginLeft:100
+    alignSelf: 'center', // Centers in the parent container
+    textAlign: 'center',
+    width: '100%',
   },
   value: {
     fontSize: 12,
-    textAlign: 'right',
+    textAlign: 'center',
     color: '#555',
   },
   labeltop: {

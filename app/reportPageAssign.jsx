@@ -7,7 +7,8 @@ import { host } from './util/constants';
 import { TextInput } from '@react-native-material/core';
 // import Sign from './../assets/images/Sign.jpg'
 import { getUser } from './util/asyncStorage';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import DraftSignaturePad from '../components/signaturePadDraft';
 
 
 const ReportPageAssign = ({ navigation }) => {
@@ -24,16 +25,13 @@ const text ='this is demo sign origina may be diffrent';
   const [user,setUser] = useState({ name: ''})
   const data3 = JSON.parse(reportDetailsData || '{}');
   const data4 = JSON.parse(itemData || '{}');
- 
-
-
+  const nav = useNavigation();
 
   useEffect(() => {
     const getReport=async()=>{
         const responce=await getAPICall(`/api/getReportById/${report_id}`);
         setReport(responce);
-        
-        
+  
       }
     getReport();
   },[])
@@ -49,7 +47,7 @@ const text ='this is demo sign origina may be diffrent';
                     onPress: () => saveDraft(),
                     style: "cancel"
                 },
-                { text: "Ok", onPress: () => router.push('./profile') }
+                { text: "Ok", onPress: () =>nav.goBack() }
             ]
         );
         return true; // Prevent default behavior
@@ -60,12 +58,11 @@ const text ='this is demo sign origina may be diffrent';
         backAction
     );
 
-    return () => BackHandler.remove(); // Cleanup
+    return () => backHandler.remove(); //Cleanup
 }, []);
  
 const saveDraft=()=>{
-  console.log('saved');
-  
+
 }
 
   const handleSubmitsign = () => {
@@ -90,40 +87,40 @@ const saveDraft=()=>{
     fetchUserData();
   }, []);  // Ensure dependency array is provided
   
-//   console.log("GOOD",report);
-  const handleSubmit = async () => {
-    const payload = {
-        signature_by: customerName,
-        remark: data3.remark,
-        nature_complaint: data3.nature_complaint,
-        actual_fault: data3.actual_fault,
-        action_taken: data3.action_taken,
-        customer_suggestion: data3.customer_suggestion,
-        signature:signature,
-        report_id: report_id,
-        created_by: user.id,
-        spare_parts: data4
-          ? data4.map((item) => ({
-              description: item.description,
-              qty:parseInt(item.quantity, 10),
-              remark: item.remark,
-            }))
-          : [],
-      };
 
+  const handleSubmit = async () => {
+   
+
+    const payload = {
+      demo_report_id: report_id,
+      signature_by: customerName,
+      remark: data3.remark,
+      nature_complaint: data3.nature_complaint,
+      actual_fault: data3.actual_fault,
+      action_taken: data3.action_taken,
+      customer_suggestion: data3.customer_suggestion,
+      signature:signature,
+      created_by: user.id,
+      spare_parts: data4
+        ? data4.map((item) => ({
+            description: item.description,
+            qty:parseInt(item.quantity, 10),
+            remark: item.remark,
+          }))
+        : [],
+    };
 
       try {
-        const response = await post(`/api/genarateReportDetails`, payload);
-        setReportDetailsId(response.reportDetail.id);
-      //   console.log(response.data.id);
-       const id=response.reportDetail.id;
+        const response = await post(`/api/FinalReport`, payload);
+        setReportDetailsId(response.id);
+        const id=response.id;
         Alert.alert(
           'Success',
-          `Report Number ${response.reportDetail.id} Generated Successfully!`,
+          `Report Number ${id} Generated Successfully!`,
           [{ text: 'OK', 
            
             onPress: () => {
-              const id = response.reportDetail.id; // Define `id` here from `response`
+              const id = response.id; // Define `id` here from `response`
               router.push({
                 pathname: '/finalReport',
                 params: { id },
@@ -154,9 +151,6 @@ const saveDraft=()=>{
     
     setSignVisible(false);
   };
-
-  // console.log(reportId);
-
   const handleCloseSign = () => {
     setSignVisible(false);
   };
@@ -282,7 +276,7 @@ const saveDraft=()=>{
         <Modal visible={signVisible} transparent={true} animationType="slide">
           <View style={styles.modalBackground}>
             <View style={styles.modalContainerSign}>
-              <SignaturePad  onOK={handleOnSign} onClose={handleCloseSign} />
+              <DraftSignaturePad  onOK={handleOnSign} onClose={handleCloseSign} />
               {/* <TouchableOpacity style={styles.closeButton1} onPress={handleCloseSign}>
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity> */}

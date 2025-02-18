@@ -24,7 +24,6 @@ export async function register(data) {
 export async function postFormData(url = '', data) {
   try {
     const token = await getToken();  // Assuming getToken() retrieves the authentication token
-    console.log("Posting data to:", url);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -33,7 +32,6 @@ export async function postFormData(url = '', data) {
       },
       body: data,  // Pass the FormData object directly as the body
     });
-    console.log("Response status:", response.status);
     if (!response.ok) {
       if (response.status === 401 && !url.includes('/login')) {
         // deleteUserData();  // Assuming this function logs out or clears user session
@@ -48,7 +46,6 @@ export async function postFormData(url = '', data) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const jsonResponse = await response.json();
-    console.log("JSON response:", jsonResponse);
     return jsonResponse;  // Parse and return the JSON response
   }  catch (error) {
     console.error('Error posting data:', error);
@@ -65,7 +62,6 @@ export async function postFormData(url = '', data) {
 // async function postOrPutData(url = '', data = {}, method = 'POST') {
 //   try {
 //     const token = await getToken();
-//     console.log(token);
 //     const response = await fetch(url, {
 //       method: method,
 //       headers: {
@@ -100,7 +96,6 @@ export async function postFormData(url = '', data) {
 async function postOrPutData(url = '', data = {}, method = 'POST') {
   try {
     const token = await getToken();
-    console.log('Token:', token);
 
     const response = await fetch(url, {
       method: method,
@@ -144,7 +139,6 @@ async function postOrPutData(url = '', data = {}, method = 'POST') {
 // async function getOrDelete(url = '', method = 'GET') {
 //   try {
 //     const token = await getToken();
-//     console.log(token);
 //     const response = await fetch(url, {
 //       method: method,
 //       headers: {
@@ -181,7 +175,6 @@ async function postOrPutData(url = '', data = {}, method = 'POST') {
 async function getOrDelete(url='', method = 'GET') {
   try {
     const token = await getToken();
-    console.log(token);
     const response = await fetch(url,{
       method: method,
       headers: {

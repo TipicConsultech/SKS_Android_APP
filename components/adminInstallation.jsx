@@ -97,7 +97,7 @@ const AdminInsta = ({ isVisible, onClose,customer,customerId,setIsModalVisible})
     try {
       const response = await post("/api/allUser",{ search: text });
 
-      console.log(response); // Check the response from the API
+      
 
       if (Array.isArray(response)) {
         setFilteredUser(response); // Update with filtered data if response is an array
@@ -186,7 +186,7 @@ if(selectedLocation !== "" || location!==""){
        "assigned_to": userData.type === 0 ? `${assignedUser.id}` : userData.id,
         "closed":0,
     };
-    console.log(newEquipment);
+    
     try {
         const response = await post("/api/assignReportWithEquipment", newEquipment);
         if (response.report.id !== null) {
@@ -288,7 +288,7 @@ if(selectedLocation !== "" || location!==""){
       )}
   {userData.type===0 &&(
             <TextInput
-            placeholder="Assign User"
+            placeholder="Assign Service Engineer"
              variant="outlined"
             style={styles.searchInputa}
             value={searchUser}

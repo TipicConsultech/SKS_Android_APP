@@ -16,10 +16,8 @@ export const savePayloadToAsyncStorage = async (payload) => {
 
     // Save the updated array back to AsyncStorage
     await AsyncStorage.setItem(storageKey, JSON.stringify(payloadArray));
-    console.log('Draft Saved Sucessfully');
     return true;
   } catch (error) {
-    console.log('Error storing payload:', error);
     return false;
   }
 };
@@ -29,7 +27,6 @@ export const fetchPayloads = async () => {
     try {
       const data = await AsyncStorage.getItem('payloadArray');
       const payloadArray = data ? JSON.parse(data) : [];
-    //   console.log('Stored payloads:', payloadArray); 
     return payloadArray;
     } catch (error) {
       console.error('Error fetching payloads:', error);
@@ -47,7 +44,6 @@ export const deletePayload = async (reportId) => {
       // Save the updated array back to AsyncStorage
       await AsyncStorage.setItem('payloadArray', JSON.stringify(updatedArray));
   
-      console.log(`Payload with report_id ${reportId} deleted successfully!`);
     } catch (error) {
       console.error('Error deleting payload:', error);
     }
@@ -66,11 +62,9 @@ export const deletePayload = async (reportId) => {
        
         return payload; // Keep others unchanged
       });
-      console.log('updated payload:',updatedArray);
       // Save the updated array back to AsyncStorage
       await AsyncStorage.setItem('payloadArray', JSON.stringify(updatedArray));
   
-      console.log(`Payload with report_id ${reportId} updated successfully!`);
     } catch (error) {
       console.error('Error updating payload:', error);
       return false;

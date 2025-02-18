@@ -25,11 +25,9 @@ const ReportPage = ({ navigation }) => {
   const data2 = JSON.parse(customreData || '{}');
   const data3 = JSON.parse(reportData || '{}');
 //   const data4 = JSON.parse(itemData || '{}');
-  // console.log("Data4 isS",data4);
   const [reportId, setReportId] = useState(0);
 
   // const data5 = JSON.parse(item || '{}');
-// console.log(data);
 
   const handleSubmitsign = () => {
     setSignVisible(true);
@@ -95,7 +93,7 @@ try {
     Alert.alert(
       'Success',
       `Report Number ${response.id} Generated Successfully!`,
-      [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+      [{ text: 'OK'}]
     );
 
     
@@ -123,7 +121,6 @@ try {
     setSignVisible(false);
   };
 
-  // console.log(reportId);
 
   const handleCloseSign = () => {
     setSignVisible(false);

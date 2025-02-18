@@ -123,7 +123,7 @@ if(selectedLocation !== "" || location!==""){
   //      "assigned_to":assignedTo,
   //       "closed":0,
   //   };
-  //   console.log(newEquipment);
+ 
   //   try {
   //       const response = await post("/api/assignReportWithEquipment", newEquipment);
   //       if (response.report.id !== null) {

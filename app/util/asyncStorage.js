@@ -5,7 +5,6 @@ import { Alert } from 'react-native';
 const storeToken = async (token) => {
   try {
     await AsyncStorage.setItem('userToken', token);
-    console.log('Token stored successfully');
   } catch (error) {
     // console.error('Error storing the token:', error);
     Alert.alert('Error storing the token:', error.toString());
@@ -19,14 +18,12 @@ const getToken = async () => {
     const token = await AsyncStorage.getItem('userToken');
     if (token !== null) {
       // Token retrieved successfully
-      console.log('Token retrieved:', token);
       return token;
     }
     // Alert.alert('Token is empty:');
 
     return null; // Token not found
   } catch (error) {
-    console.error('Error retrieving the token:', error);
     Alert.alert('Error retriving the token:', error);
 
   }
@@ -40,7 +37,6 @@ const getToken = async () => {
 //       try {
 //         // Parse the JSON string back into an object
 //         const user = JSON.parse(userString);
-//         console.log('User retrieved:', user); // Optional: Only in dev mode
 //         return user;
 //       } catch (parseError) {
 //         console.error('Error parsing user data:', parseError);
@@ -65,7 +61,6 @@ const getToken = async () => {
 
 //     const userString = JSON.stringify(user);
 //     await AsyncStorage.setItem('user', userString);
-//     console.log('User data stored successfully.');
 //   } catch (error) {
 //     console.error('Error storing user data:', error);
 //   }
@@ -80,7 +75,6 @@ const getUser = async () => {
       const user = JSON.parse(userString);
       
       // User data retrieved successfully
-      console.log('User retrieved:', user);
       return user;
     }
     
@@ -106,7 +100,6 @@ const storeUserData = async (response) => {
     // const userType = user.type.toString(); // Ensure it's stored as a string
     // await AsyncStorage.setItem('userType', userType);
 
-    // console.log('User data stored successfully.');
   } catch (error) {
     console.error('Error storing user data:', error);
   }
@@ -117,7 +110,6 @@ const deleteUser = async () => {
     // Remove the user data from AsyncStorage
     await AsyncStorage.removeItem('user');
     
-    console.log('User data deleted successfully.');
   } catch (error) {
     console.error('Error deleting user data:', error);
   }
@@ -127,7 +119,6 @@ const deleteUser = async () => {
 const updateToken = async (newToken) => {
   try {
     await AsyncStorage.setItem('userToken', newToken);
-    console.log('Token updated successfully');
   } catch (error) {
     console.error('Error updating the token:', error);
   }
@@ -137,7 +128,6 @@ const updateToken = async (newToken) => {
 const deleteToken = async () => {
   try {
     await AsyncStorage.removeItem('userToken');
-    console.log('Token deleted successfully');
   } catch (error) {
     console.error('Error deleting the token:', error);
   }

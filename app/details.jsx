@@ -28,10 +28,13 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import Draft from "../assets/images/draft.png"
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import AddTable from "../components/addItem";
 import { getUser } from "./util/asyncStorage";
 import { fetchPayloads, savePayloadToAsyncStorage } from "./util/drafts";
+import { post } from "./util/api";
+
+
 
 const CustomerInfo = () => {
 
@@ -39,10 +42,9 @@ const CustomerInfo = () => {
   // const { r_id } = route.params ;
   // const { remark } = route.params ;
   const { reportNumber, remark } = useLocalSearchParams();
-  console.log("Received ID:", reportNumber);
-  console.log("Received Remark:",remark );
 
-
+  const navigation = useNavigation();
+ 
   useEffect(() => {
     const backAction = () => {
         Alert.alert(
@@ -54,7 +56,8 @@ const CustomerInfo = () => {
                     onPress: () => saveDraft(),
                     style: "cancel"
                 },
-                { text: "Ok", onPress: () => router.push('./profile') }
+                { text: "Ok", onPress: () =>  navigation.goBack()
+                }
             ]
         );
         return true; // Prevent default behavior
@@ -69,12 +72,9 @@ const CustomerInfo = () => {
 }, []);
  
 const saveDraft=()=>{
-  console.log('saved');
-  
 }
 
  const [itemsTable, setItemsTable] = useState([]);
-console.log(itemsTable);
 
  
   const [customerName, setCustomerName] = useState("");
@@ -145,19 +145,6 @@ console.log(itemsTable);
   }, []);
  
 
-  // const pickerItems = [
-  //   { label: "Select Remark", value: "Select Remark" },
-  //   { label: "Not Working", value: "0" },
-  //   { label: "Working Moderately", value: "1" },
-  //   { label: "Working Fully", value: "2" },
-  //   { label: "Faulty/unserviceable", value: "3" },
-  // ];
-
-  // // Filter items based on currentValue
-  // const filteredItems = pickerItems.filter(
-  //   (item) => parseInt(item.value) >= currentValue || isNaN(item.value)
-  // );
-
   const pickerItems = [
     { label: "Select Remark", value: "Select Remark" },
     { label: "Not Working", value: "0" },
@@ -181,7 +168,6 @@ console.log(itemsTable);
   });
   
   // Example usage
-  console.log(filteredItems);
   
 
   const handleAddItem = () => {
@@ -220,7 +206,7 @@ console.log(itemsTable);
       action_taken: actionteken,
       customer_suggestion: customersug,
       report_id: reportNumber,
-      created_by: user.id,
+      // created_by: user.id,
       spare_parts: itemsTable
         ? itemsTable.map((item) => ({
             description: item.description,
@@ -229,10 +215,32 @@ console.log(itemsTable);
           }))
         : [],
     };
-   if(allDrafts!== null){
-  addPayloadIfNotExists(allDrafts,payload);
-   }
-   
+  //  if(allDrafts!== null){
+  // addPayloadIfNotExists(allDrafts,payload);
+  //  }
+try{
+  const response= await post('/api/genarateReportDetails',payload);
+  
+  Alert.alert(
+    "Success", // Title of the alert
+    "Draft saved succesfully", // Message
+    [
+        // {
+        //     text: "Stay Page",
+        //     onPress: () => saveDraft(),
+        //     style: "cancel"
+        // },
+        { text: "Ok", onPress: () =>  navigation.goBack()
+        }
+    ]
+);
+  
+}
+catch(e){
+  alert("error saving draft");
+}
+  
+ 
   }
 
   async function addPayloadIfNotExists(array, newPayload) {
@@ -372,7 +380,7 @@ console.log(itemsTable);
                  
                 <TextInput
                   variant="outlined"
-                  label="Finally Status"
+                  label="Final Status"
                   style={styles.searchInput}
                   value={customersug}
                   onChangeText={setCustomersug}

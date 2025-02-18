@@ -22,7 +22,6 @@ const Profile = () => {
   const [new_password, setNewPassword] = useState('');
   const [password, setOldPassword] = useState('');
   const [data, setData] = useState([]);
-  console.log(data);
   
   const [activeCard, setActiveCard] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
@@ -187,12 +186,9 @@ const Profile = () => {
       setModalVisible(false); // Close the modal if open
         router.push('/'); // Redirect to the homepage
       } catch (error) {
-        console.log('Error', 'Failed to update password.');
         
       }
-    } else {
-      console.log('Error', 'Passwords do not match or fields are empty.');
-    }
+    } 
   };
   const toggleHamburgerMenu = () => {
     setHamburgerMenuVisible(!hamburgerMenuVisible); // Toggle menu visibility
@@ -218,7 +214,7 @@ const Profile = () => {
      
     }
      
-    console.log(tabNum);
+   
     
     // Map the 'type' to the correct numeric status for the backend
     const status = type === 'pending' ? 0 : type === 'inProgress' ? 1 : type === 'completed' ? 2 : 3;
@@ -228,19 +224,33 @@ const Profile = () => {
   
   const fetchReports = async (closed) => {
     setLoading(true);
-    try {
-      const response = await getAPICall(`/api/getWorkingUserReports/${closed}`);
-      setData(transformData(response));  // Transform and set the data
-      setDataLoading(false);
-      console.log(response);
+    if(closed==='1'){
+      try {
+        // const response = await getAPICall(`/api/getWorkingUserReports/${closed}`);
+        const response = await getAPICall(`/api/allFinalReport`);
+        setData(transformData(response));  // Transform and set the data
+        setDataLoading(false);
       
-    } catch {
-      setDataLoading(true);
-      console.log('Failed to fetch reports.');
-     // ('Error', 'Failed to fetch reports.');
-    } finally {
-      setLoading(false);
+        
+      } catch {
+        setDataLoading(true);
+      } finally {
+        setLoading(false);
+      }
     }
+    else if(closed==='0'){
+      try {
+        const response = await getAPICall(`/api/getWorkingUserReports/${closed}`);
+        setData(transformData(response));  // Transform and set the data
+        setDataLoading(false);
+      } catch {
+        setDataLoading(true);
+
+      } finally {
+        setLoading(false);
+      }
+    }
+  
   };
   
   // Map status values to text labels for display
@@ -279,7 +289,7 @@ const fetchUsers= async() => {
   }
 };
 
-console.log(users);
+
 
   const findNameById = (id) => {
     const record = users.find(item => item.id === id);
@@ -308,13 +318,14 @@ console.log(users);
       remark:item.remark,
       status: getStatusLabel(item.remark), // Use getStatusLabel to map remark values to labels
       reportNumber: item.id,
-      sName:findNameById(item.assigned_to),
+      sName:findNameById(item?.assigned_to||item?.created_by),
       date: item.created_at
         ? new Date(item.created_at).toISOString().split('T')[0]
         : 'N/A',
       equipment:truncateString(item.equipment_name,28),
       serialNo:item.serial_no,
       //Draft:draftReportExists(reportNumber)
+      ReportOrToken:  item?.closed === 0 ? "Token":"Report"
     }));
   
   const Details = () => (
@@ -335,16 +346,21 @@ console.log(users);
     </View>
   );
   
-  const Card = ({ name, address, callType, status,remark, reportNumber, date,sName ,equipment,serialNo}) => {
+  const Card = ({ name, address, callType, status,remark, reportNumber, date,sName ,equipment,serialNo,ReportOrToken}) => {
    let isDisabled=false;
    let draft=false;
     // if(remark === 2 || remark===3|| remark ===1||remark ===0){
     //     isDisabled = true ;
     // }
    
-   
-   
-
+   let IDText= null;
+   if(ReportOrToken==="Report"){
+    IDText="Report No:";
+   }
+  else if(ReportOrToken==="Token"){
+    IDText="Token No:"
+   }
+   console.log(IDText);
     const lineColor = (str) => {
       switch (str) {
         case 'Not Working': return '#F3732A';//red
@@ -368,9 +384,14 @@ console.log(users);
           }
           if(remark!==null){
            
-            routeToDetails1("/finalReportHistory",reportNumber);
-
+            // routeToDetails1("/finalReportHistory",reportNumber);
+            const id=reportNumber;
+            router.push({
+              pathname: '/finalReport',
+              params: { id },
+            });
           }
+
          
           //   if (user.type === 0) {
           //     setSelectedID(reportNumber);
@@ -393,7 +414,7 @@ console.log(users);
 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
   <View>
     <Text style={styles.cardTitle}>
-      Report No: <Text style={styles.highlightreport}>{reportNumber}</Text>
+   {IDText} <Text style={styles.highlightreport}>{reportNumber}</Text>
     </Text>
     <Text style={styles.detailTextreport}>{name}</Text>
     <Text style={styles.cardSubtitle}>{address}</Text>

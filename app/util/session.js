@@ -5,7 +5,7 @@
  */
 export function storeUserData(userData) {
   sessionStorage.setItem('userData', JSON.stringify(userData))
-  console.log(userData);
+
 }
 
 /**

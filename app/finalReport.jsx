@@ -1,29 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet, FlatList, Image, Button, Alert } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, FlatList, Image, Button, Alert, BackHandler, TouchableOpacity } from 'react-native';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import yourImage from '../assets/images/logo.png'; 
-import { useLocalSearchParams,useRouter} from 'expo-router';
+import { router, useLocalSearchParams,useRouter} from 'expo-router';
 import { getAPICall } from './util/api';
 import skslogo from './util/logo';
 import { getUser } from './util/asyncStorage';
 import { cinzelFont } from './util/font';
+import { useNavigation } from '@react-navigation/native';
 
 const FinalReport = () => {
 
   const currentDate = new Date();
 
   // Format the date as needed
-  const formattedDate = currentDate.toLocaleDateString(); // e.g., "10/9/2024"
+
   const [reportData1, setReportData] = useState(null);
   const [reportDetailsData, setReportDetailsData] = useState(null);
   const [sparePartsData1, setSparePartsData] = useState(null);
   const [sparePartsDataLenght, setSparePartsDataLength] = useState(0);
   const [serviceEngineer,setServiceEngg]=useState(null);
+  const [formattedDate,setFormattedDate]=useState(null);
   const [remark, setRemark] = useState('loading..');
 
 const {id} = useLocalSearchParams();
+ const navigation = useNavigation();
+
+useEffect(() => {
+    const backAction = () => {
+        Alert.alert(
+            "Warning", // Title of the alert
+            "Do you want to go back or stay on this page?", // Message
+            [  
+               
+                { text: "Back", onPress: () => navigation.goBack() },
+                {
+                  text: "Stay",
+                  onPress: () => saveDraft(),
+                  style: "cancel"
+              },
+            ]
+        );
+        return true; // Prevent default behavior
+    };
+
+    const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup
+}, []);
+
+function saveDraft(){
+  
+}
 
 
 
@@ -32,7 +65,8 @@ const remarkString = (remark) => {
     case 0: return 'Not Working';
     case 1: return 'Working Moderately';
     case 2: return 'Working Fully';
-    case 3: return 'Faulty/unserviceable';
+    case 3: return 'Faulty\u2215unserviceable';
+    // case 3: return 'Faulty_unserviceable';
   }
 };
 
@@ -61,13 +95,39 @@ const [user, setUser] = useState();
       }
     };
     fetchUserData();
-  }, []);  // Ensure dependency array is provided
+  }, []);  
   
   useEffect(() => {
     if (id) {
-      fetchAllData();
+      // fetchAllData();
+      fetchReport(id)
     }
   }, [id]);
+
+  const fetchReport = async (Id) => {
+    try {
+      const response = await getAPICall(`/api/FinalReport/${Id}`);
+      setReportData(response.ReportData);
+      setSparePartsData(response.sparepartData);
+      setReportDetailsData(response.ReportData);
+      setRemark(remarkString(response.ReportData.remark));
+      //setFormattedDate(response.ReportData.created_at);
+      setFormattedDate(formatDateToDDMMYYYY(response.ReportData.created_at));
+      fetchServiceEngineer(response.ReportData.created_by)
+    }
+    catch(e){
+
+    }}
+
+    function formatDateToDDMMYYYY(dateString) {
+      const date = new Date(dateString);
+  
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const year = date.getUTCFullYear();
+  
+      return `${day}-${month}-${year}`;
+  }
  
   // Fetch all data sequentially to handle any dependencies between them
   const fetchAllData = async () => {
@@ -75,6 +135,7 @@ const [user, setUser] = useState();
       const details = await fetchReportDetails();
       if (details?.report_id) {
         await fetchReportData(details.report_id);
+       
       }
       if(details?.created_by){
       fetchServiceEngineer(details.created_by);}
@@ -91,6 +152,9 @@ const [user, setUser] = useState();
       const response = await getAPICall(`/api/getReportDetailsById/${id}`);
       setReportDetailsData(response);
       setRemark(remarkString(response.remark));
+      const [year, month, day] = response?.created_at.split(" ")[0].split("-");
+      const formatDate = `${day}-${month}-${year}`;
+      setFormattedDate(formatDate)
       return response; // Return data for further use
     } catch (error) {
       console.error(error);
@@ -892,7 +956,7 @@ const [user, setUser] = useState();
         <View style={styles.horizontalItemtop}>
           <Text style={styles.labeltop}>Date:</Text>
           {/* <Text style={styles.valuetop}>{reportData.id}</Text> */}
-          {reportData1!==null ? <Text style={styles.valuetop}> { formattedDate} </Text> : <Text style={styles.valuetop}>Loading...</Text>}
+          {formattedDate!==null ? <Text style={styles.valuetop}> { formattedDate} </Text> : <Text style={styles.valuetop}>Loading...</Text>}
           {/* <Text style={styles.labeltop}> Time:</Text>
           {reportData1!==null ? <Text style={styles.valuetop}>{ formattedTime}</Text> : <Text style={styles.valuetop}>Loading...</Text>} */}
 
@@ -1094,11 +1158,17 @@ const [user, setUser] = useState();
     
 
     </ScrollView>
-    <Button 
-  title="Save and Share PDF" 
-  // onPress={sparePartsDataLenght > 7 ? createAPdfTwoPages : createAndSharePDF} 
-  onPress={createAndSharePDF} 
-/>
+    <View style={styles.buttonContainer}>
+      
+
+       <TouchableOpacity style={styles.customButtonDashBoard} onPress={createAndSharePDF} >
+                                 <Text style={styles.buttonSaveText}>Save and Share PDF</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.customButtonSave} onPress={()=>{router.push('/profile')}} >
+                                 <Text style={styles.buttonSaveText}>Go to Dashboard</Text>
+      </TouchableOpacity>
+    </View>
     </View>
   );
 };
@@ -1109,6 +1179,40 @@ const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: '#fff',
 
+  },
+
+  customButtonSave: {
+    backgroundColor: "red",
+      paddingVertical: 13,
+      paddingHorizontal: 28,
+      borderRadius: 8,
+      marginTop: 5,
+      marginBottom:25,
+      
+      alignItems: "center",
+      elevation: 4,
+    },
+    customButtonDashBoard: {
+      backgroundColor: "black",
+        paddingVertical: 13,
+        paddingHorizontal: 28,
+        borderRadius: 8,
+        marginTop: 5,
+        marginBottom:25,
+        
+        alignItems: "center",
+        elevation: 4,
+      },
+  buttonSaveText: {
+    color: "#fff",
+    fontSize: 13,
+   
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center', 
+    gap: 10, // Adjust the gap as needed
+    marginBottom:6,
   },
   header: {
     flexDirection: 'row',

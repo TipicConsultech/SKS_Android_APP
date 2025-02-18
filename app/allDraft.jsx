@@ -4,81 +4,23 @@ import { getAPICall, post } from './util/api';
 import { router, useRouter } from 'expo-router';
 import { deletePayload, fetchPayloads, updatePayload } from './util/drafts';
 import DraftSignaturePad from '../components/signaturePadDraft';
+import { useNavigation } from '@react-navigation/native';
 
 // Card component with dynamic border styling
-const Card = ({ reportNumber, serviceEngg, remark, users,signatureExsist,payload})=>{
+const Card = ({ reportNumber, serviceEngg, remark,signatureExsist,payload,assignedBy,type})=>{
 
   const [isSigned, setIsSigned] = useState(false);
   const [signPadVisible, setSignPadVisible] = useState(false);
   const [customerName, setCustomerName] = useState('');
 
-const router = useRouter();
-  let cardColour = signatureExsist !== null ? '#e6ffe6' : '#e6ffe6';
-
-
-  const handleSubmit = async () => {
-
-    Alert.alert(
-        'Confirmation ',
-        `Do you want to submit report`,
-        [
-        { text: 'No', 
-         
-            onPress: () => {
-              console.log("No button pressed");
-              
-            },
-          
-          },
-          { text: 'Yes ', 
-         
-            onPress: async() => {
-
-                try {
-                    const response = await post(`/api/genarateReportDetails`, payload);
-              
-                  //   console.log(response.data.id);
-                   const report_id=response.reportDetail.report_id;
-                   deletePayload(report_id);
-                    Alert.alert(
-                      'Success',
-                      `Report Number ${report_id} Generated Successfully!`,
-                      [
-                      { text: 'Cancle', 
-                       
-                          onPress: () => {
-                            router.push('/profile');
-                          },
-                        
-                        },
-                        { text: 'Print ', 
-                       
-                          onPress: () => {
-                            const id = response.reportDetail.id; // Define `id` here from `response`
-                            router.push({
-                              pathname: '/finalReport',
-                              params: { id },
-                            });
-                          },
-                        },
-                      ]
-                    );
-               
-                   
-                  } catch (error) {
-                    console.error('Error submitting report:', error);
-                    Alert.alert('Error', 'Failed to submit the report.');
-                  }
-             
-            },
-          },
-        ]
-      );
-    
-      
-    
   
-    };
+
+const router = useRouter();
+  let cardColour = type === 0 ? '#86f5fc' : '#e6ffe6';
+
+
+  
+
   
   const borderColor = (remark) => {
     switch (remark) {
@@ -118,10 +60,7 @@ const router = useRouter();
     }
   };
 
-  const findNameById = (id) => {
-    const record = users.find((item) => item.id === id);
-    return record ? record.name : 'Name not found';
-  };
+ 
 
   const handleOnSign = (sign) => {
    const data={
@@ -150,39 +89,33 @@ const router = useRouter();
     <View>
 <TouchableOpacity
         style={[styles.card, { borderTopColor: lineColor, backgroundColor: cardColour }]}
-        onPress={() => {{
-            if(signatureExsist==''){
-                setSignPadVisible(true);
-            }
-            else{
-                handleSubmit();
-            }
+        onPress={() => {
 
-        }}
+          router.push(`/finalReportHistory?reportNumber=${reportNumber}`);
+        
+      }
         }
         onLongPress={handleDelete}
       >
         <View style={styles.cardContent}>
-          <Text style={styles.title}>Report: {reportNumber}</Text>
+          <Text style={styles.title}>Temp Token (Drafted): {reportNumber}</Text>
           <View style={styles.infoRow}>
             <Text style={styles.label}>S.Engineer Name:</Text>
-            <Text style={styles.value}>{findNameById(serviceEngg)}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>S.Engineer Id:</Text>
             <Text style={styles.value}>{serviceEngg}</Text>
           </View>
+          {/* <View style={styles.infoRow}>
+            <Text style={styles.label}>S.Engineer Id:</Text>
+            <Text style={styles.value}>{serviceEngg}</Text>
+          </View> */}
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Remark:</Text>
-            <Text style={styles.value}>{remarkString(remark)}</Text>
+            <Text style={styles.label}>Assigned By:</Text>
+            <Text style={styles.value}>{assignedBy}</Text>
           </View>
         </View>
       </TouchableOpacity>
       <Modal visible={signPadVisible} transparent={true} animationType="slide">
         <View style={styles.modalBackground}>
-       
           <View style={styles.modalContainerSign}>
-         
             <DraftSignaturePad onOK={handleOnSign} onClose={handleCloseSign} customerName={customerName} setCustomerName={setCustomerName} />
           </View>
         </View>
@@ -196,7 +129,7 @@ const AdminCard = () => {
   const [data, setData] = useState([]);
   const [users, setUsers] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
-
+ const navigation = useNavigation();
 
   useEffect(() => {
     fetchUserData();
@@ -204,8 +137,8 @@ const AdminCard = () => {
 
   const fetchUserData = async () => {
     try {
-      const Draft = await fetchPayloads();
-      console.log('Fetched Draft Data:', Draft);
+      // const Draft = await fetchPayloads();
+      const Draft = await getAPICall('/api/allDraft');
       setData(Draft);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -219,7 +152,7 @@ const AdminCard = () => {
 
   useEffect(() => {
     const backAction = () => {
-      router.push('./profile');
+       navigation.goBack();
       return true;
     };
 
@@ -231,6 +164,8 @@ const AdminCard = () => {
   const fetchUsers = async () => {
     try {
       const response = await getAPICall(`/api/users`);
+      console.log(response);
+      
       setUsers(response);
     } catch (error) {
       console.error('Failed to fetch Users:', error);
@@ -246,6 +181,26 @@ const AdminCard = () => {
     );
   }
 
+  const findNameById = (id) => {
+    const record = users.find(item => item.id === id);
+    return record ? record.name : "Name not found";
+  };
+  const findAssignedByType = (type) => {
+    let assigned_by=null;
+    switch (type) {
+      case 0:
+        assigned_by = "Admin";
+        break;
+      case 1:
+        assigned_by = "Service Engineer";
+        break;
+      default:
+        assigned_by = "Not Found";
+        break;
+    }
+    return assigned_by;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Drafted Reports</Text>
@@ -257,13 +212,15 @@ const AdminCard = () => {
         renderItem={({ item }) => (
           <Card
             reportNumber={item.report_id}
-            serviceEngg={item.created_by}
+            serviceEngg={findNameById(item.created_by)}
+            assignedBy={findAssignedByType(item.assigned_by)}
             remark={item.remark}
             users={users}
             fetchUserData={fetchUserData}
             signatureExsist={item?.signature ?? ''}
             setRefreshKey={setRefreshKey}
             payload={item}
+            type={item.assigned_by}
           />
         )}
         contentContainerStyle={styles.listContainer}
@@ -293,6 +250,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f9f9f9',
+      },
+      containerAdmin:{
+        flex: 1,
+        backgroundColor: '#44e012',
       },
       header: {
         alignSelf: 'center',

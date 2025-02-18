@@ -62,7 +62,6 @@ const RegisterScreen = () => {
 }, []);
  
 const saveDraft=()=>{
-  console.log('saved');
   
 }
 

@@ -33,7 +33,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       const userData = await getUser(); // Fetch the user data
-      console.log(userData);
       
       if (userData) {
         // Update state with user information
@@ -72,7 +71,6 @@ export default function Dashboard() {
   // Function to handle card press events
   const handlePress = (route) => {
     router.push(route); // Navigate to a different route if needed
-   // console.log(`Navigating to ${route}`);
   };
   const truncateString = (text, maxLength) => {
     if (!text || typeof text !== 'string') return ''; // Handle invalid input

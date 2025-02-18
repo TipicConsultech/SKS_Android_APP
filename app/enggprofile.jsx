@@ -11,7 +11,6 @@ import { getAPICall } from './util/api';
 import { deletePayload, fetchPayloads, savePayloadToAsyncStorage } from './util/drafts';
 
 // const dd =(getUser);
-// console.log(dd);
 const ProfilePage = () => {
     const [profileData, setProfileData] = useState({
       name: '',
@@ -85,12 +84,9 @@ async function add(){
   }
 
   if (data !== null ) {
-    console.log(data.length);
     
-    addPayloadIfNotExists(data, payload);
-  } else {
-    console.log("Data is either null or empty, payload not added.");
-  }
+  addPayloadIfNotExists(data, payload);
+  } 
 }
     
 
@@ -105,7 +101,6 @@ async function addPayloadIfNotExists(array, newPayload) {
   } else {
     // Add the new payload to the array
    savePayloadToAsyncStorage(newPayload)
-    console.log(array);
     
   }
 }
