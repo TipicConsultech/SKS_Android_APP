@@ -6,6 +6,11 @@ import { getAPICall, post } from '../util/api';
 import historyLogo from '../../assets/images/historyLogo.png'
 import Draft from "../../assets/images/draft.png"
 import { fetchPayloads} from "../util/drafts";
+import CardSkeletonLoader from '../skelton/CardsSkelton';
+import { Svg, Path } from "react-native-svg";
+import { Switch } from "react-native-switch";
+import BottomSheet from '../../components/Slider';
+
 const Profile = () => {
   const [modalVisible, setModalVisible] = useState({
     total: false,
@@ -37,6 +42,17 @@ const Profile = () => {
   const [newPasswordError, setNewPasswordError] = useState('');
   const [users, setUsers] = useState([]);
   const [allDraft, setAllDraft] = useState(null);
+  const [marginTop, setMarginTop] = useState(100);
+  const [isSwitchEnabled, setIsEnabled] = useState(false);
+  const [isFilterEnabled, setFilterEnabled] = useState(false);
+  const [isSearchEnabled, setSearchEnabled] = useState(false);
+
+
+  const handleScroll = (event) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setMarginTop(offsetY > 10 ? 0 : 100);
+  };
+
 
   const openModal = (type) => {
     setModalVisible((prev) => ({ ...prev, [type]: true }));
@@ -332,6 +348,7 @@ const fetchUsers= async() => {
     <View style={styles.detailsContainer}>
       {loading ? (
         <Text>Loading...</Text>
+        // <CardSkeletonLoader/>
       ) : (
         <FlatList
           data={data}
@@ -455,14 +472,102 @@ elevation: 1, // For Android shadow
     );
   };
   
-
+  const MenuIcon = ({ size = 30, color = "black" }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 6h16M4 12h16M4 18h16"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
   
+  const CloseIcon = ({ size = 30, color = "black" }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 6L18 18M18 6L6 18"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+  
+  const toggleSwitch = () => {
+    setIsEnabled((prev) => !prev);
+    openDetails(!isSwitchEnabled ? "pending" : "complete");
+  };
+  const toggleFilter = () => {
+    setFilterEnabled((prev) => !prev);
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} >
+      <BottomSheet Enabled={isFilterEnabled} setIsEnabled={setFilterEnabled}/>
+      <View style={{flex:1}}>
+      {!isSwitchEnabled &&(<TouchableOpacity
+  onPress={toggleFilter}
+  style={{
+    flexDirection: "row",
+    alignItems: "center",
+    left:110,
+    backgroundColor: "#ffffff", // Tailwind Emerald-500 & Gray-500
+    borderRadius: 5,
+    borderColor:"black",
+    borderWidth:1,
+    paddingVertical: 5,
+    paddingHorizontal: -0,
+    width: 85,
+    justifyContent: isFilterEnabled ? "flex-center" : "flex-start",
+  }}
+>
+  <Text style={{marginLeft:5}}>Filters</Text>
+  <Image source={require('../../assets/svg/filter.png')} style={styles.image} />
+  
+</TouchableOpacity>)}
+  <TouchableOpacity
+  onPress={toggleSwitch}
+  style={{
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: isSwitchEnabled ?  "#f2153c" :"#008000" , // Tailwind Emerald-500 & Gray-500
+    borderRadius: 30,
+    paddingVertical: 1,
+    paddingHorizontal: -0,
+    width: 85,
+    justifyContent: isSwitchEnabled ? "flex-center" : "flex-start",
+    position: 'absolute',
+  }}
+>
+  {isSwitchEnabled && (
+    <Text style={{ color: "white", fontWeight: "bold", marginLeft:13,marginRight: 8 }}>
+     Open
+    </Text>
+  )}
+  <View
+    style={{
+      width: 30,
+      height: 30,
+      backgroundColor: "white",
+      borderRadius: 15,
+      elevation: 5,
+      marginLeft:isSwitchEnabled ? 0:1
+    }}
+  />
+  {!isSwitchEnabled && (
+    <Text style={{ color: "white", fontWeight: "bold", marginLeft: 4 }}>
+      closed
+    </Text>
+  )}
+  
+</TouchableOpacity>
+
       <TouchableOpacity onPress={toggleHamburgerMenu} style={styles.hamburgerMenu}>
-        <Text style={styles.hamburgerText}>☰</Text>
+        {hamburgerMenuVisible ? <CloseIcon size={35} color="red" /> : <MenuIcon size={35} color="black" />}
       </TouchableOpacity>
+
+      </View>
       <Modal
         visible={hamburgerMenuVisible}
         transparent={true}
@@ -519,11 +624,11 @@ elevation: 1, // For Android shadow
           </View>
         </TouchableOpacity>
       </Modal>
-      <Image source={require('../../assets/images/logo.png')} style={styles.image} />
+      {/* <Image source={require('../../assets/images/logo.png')} style={styles.image} />
       <Text style={styles.logoHeading}>SMART KITCHEN SOLUTION'S</Text>
-      <View style={styles.Line1} />
+      <View style={styles.Line1} /> */}
 
-      <View style={styles.cardContainer}>
+      {/* <View style={styles.cardContainer}>
       <TouchableOpacity
         style={[
           styles.cardm,
@@ -534,7 +639,7 @@ elevation: 1, // For Android shadow
         <Text style={styles.cardTitlem}>Closed Calls</Text>
       </TouchableOpacity>
 
-      {/* Button for "Not Working" */}
+     
       <TouchableOpacity
         style={[
           styles.cardm,
@@ -544,20 +649,7 @@ elevation: 1, // For Android shadow
       >
         <Text style={styles.cardTitlem}>Open Calls</Text>
       </TouchableOpacity>
-
-      {/* <TouchableOpacity
-        style={[
-          styles.cardm,
-          activeCard === 'complete' && styles.activeCard, // Apply active style
-        ]}
-        onPress={() => openDetails('complete')}
-      >
-        <Text style={styles.cardTitlem}>Working Fully</Text>
-      </TouchableOpacity> */}
-
-    {/* Render appropriate detail component based on user selection */}
- 
-</View >
+</View > */}
 {/* {
   detailsType &&(<Details />)
 } */}
@@ -682,13 +774,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   draftButtonText: {
-    color: "black", // White text color
+    color: "black", // text colour white 
     fontWeight: "bold",
     fontSize: 16,
     paddingRight:5
   },
   container: {
     flex: 1,
+    marginTop: 50,
     justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 5,
@@ -738,8 +831,8 @@ const styles = StyleSheet.create({
   },
   hamburgerMenu: {
     position: 'absolute',
-    top: 57,
-    left: 20,
+    left: -110,
+    
   },
   hamburgerText: {
     fontSize: 30,
@@ -875,16 +968,17 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   image: {
-    width: 160,
-    height: 65,
-    marginBottom: 6,
-    marginTop: 60,
+    width: 6,
+    height: 6,
     alignSelf: "center",
-    padding:5
+    paddingHorizontal:10,
+    marginLeft:4,
+    paddingVertical:9,
+    color:"black"
   },
   detailsContainer: {
     position: 'absolute', // Make it overlay on top of other content
-    top: 300,
+    top: 70,
     left: 0,
     right: 0,
     bottom: 5,
