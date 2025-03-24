@@ -10,7 +10,7 @@ import CardSkeletonLoader from '../skelton/CardsSkelton';
 import { Svg, Path } from "react-native-svg";
 import { Switch } from "react-native-switch";
 import BottomSheet from '../../components/Slider';
-
+// userType
 const Profile = () => {
   const [modalVisible, setModalVisible] = useState({
     total: false,
@@ -30,7 +30,9 @@ const Profile = () => {
   
   const [activeCard, setActiveCard] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
+  const [filterColour, setFilterColour] = useState("#ffffff");
 
+  
 
   const [reEnterPassword, setReEnterPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -246,7 +248,7 @@ const Profile = () => {
         const response = await getAPICall(`/api/allFinalReport`);
         setData(transformData(response));  // Transform and set the data
         setDataLoading(false);
-      
+      setFilterColour("#ffffff");
         
       } catch {
         setDataLoading(true);
@@ -257,8 +259,10 @@ const Profile = () => {
     else if(closed==='0'){
       try {
         const response = await getAPICall(`/api/getWorkingUserReports/${closed}`);
-        setData(transformData(response));  // Transform and set the data
+        setData(transformData(response));
         setDataLoading(false);
+      setFilterColour("#ffffff");
+
       } catch {
         setDataLoading(true);
 
@@ -504,7 +508,7 @@ elevation: 1, // For Android shadow
 
   return (
     <View style={styles.container} >
-      <BottomSheet Enabled={isFilterEnabled} setIsEnabled={setFilterEnabled}/>
+      <BottomSheet Enabled={isFilterEnabled} setIsEnabled={setFilterEnabled} transformData={transformData} setData={setData} setDataLoading={setDataLoading} setLoading={setLoading} userType={user?.type} setFilterColour={setFilterColour}/>
       <View style={{flex:1}}>
       {!isSwitchEnabled &&(<TouchableOpacity
   onPress={toggleFilter}
@@ -512,7 +516,7 @@ elevation: 1, // For Android shadow
     flexDirection: "row",
     alignItems: "center",
     left:110,
-    backgroundColor: "#ffffff", // Tailwind Emerald-500 & Gray-500
+    backgroundColor: filterColour, // Tailwind Emerald-500 & Gray-500
     borderRadius: 5,
     borderColor:"black",
     borderWidth:1,
@@ -538,6 +542,7 @@ elevation: 1, // For Android shadow
     width: 85,
     justifyContent: isSwitchEnabled ? "flex-center" : "flex-start",
     position: 'absolute',
+    left:isSwitchEnabled? -45:0
   }}
 >
   {isSwitchEnabled && (
@@ -563,7 +568,7 @@ elevation: 1, // For Android shadow
   
 </TouchableOpacity>
 
-      <TouchableOpacity onPress={toggleHamburgerMenu} style={styles.hamburgerMenu}>
+      <TouchableOpacity onPress={toggleHamburgerMenu} style={{ position: 'absolute',left: isSwitchEnabled? -153: -110,}}>
         {hamburgerMenuVisible ? <CloseIcon size={35} color="red" /> : <MenuIcon size={35} color="black" />}
       </TouchableOpacity>
 
@@ -656,7 +661,7 @@ elevation: 1, // For Android shadow
 {detailsType && !dataLoading ? (
   <Details />
 ) : (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
     {user.type===1 ? (<Text style={{ fontWeight: 'bold',
     fontSize:18
    }}>No Work Found</Text>):(
@@ -829,11 +834,7 @@ const styles = StyleSheet.create({
     fontSize: 14, // Smaller text for email
     color: '#666', 
   },
-  hamburgerMenu: {
-    position: 'absolute',
-    left: -110,
-    
-  },
+ 
   hamburgerText: {
     fontSize: 30,
   },

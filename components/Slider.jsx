@@ -7,16 +7,21 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  Button,
+  Image,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getAPICall, post } from '../app/util/api';
 const { height } = Dimensions.get("window");
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { select } from "@react-native-material/core";
 
-const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
+const BottomSheet = ({ Enabled, setIsEnabled,transformData,setData,setDataLoading,setLoading,userType,setFilterColour }) => {
   const translateY = useRef(new Animated.Value(height)).current; // Start at the bottom
   const [searchOpen, setSearchOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [callTypeOpen, setCallTypeOpen] = useState(false);
+  const [ErrorMessage, setErrorMessage] = useState(false);
   const [remarkOpen, setRemarkOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -25,7 +30,6 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
   const [equipments, setEquipments] = useState([]);
   const [selectedServiceEnggId, setSelectedServiceEnggId] = useState(null);
 
-  
   const [allRemarks, setAllRemarks] = useState([
     { value: 0, label: "Not Working" },
     { value: 1, label: "Working Moderately" },
@@ -45,10 +49,11 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
   const [open, setOpen] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState(0);
-
-  
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [showStartDate, setShowStartDate] = useState(false);
+  const [showEnddate, setShowEndDate] = useState(false);
   const [searchText, setSearchText] = useState("");
-
   const [userText, setUserText] = useState("");
 
   const [users, setUsers] = useState([]);
@@ -62,6 +67,81 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
 
     }
   }, [searchText]);
+
+  useEffect(() => {
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      setEndDate(null);
+    }
+  }, [startDate, endDate]);
+
+  async function fetchFilteredData(){
+    setLoading(true);
+    const payload={
+      "customer_id": selectedCustomerId,
+      "location": selectedLocations[0]===undefined ? ["all"]:selectedLocations,
+      "equipment_name": selectedEquipment[0]===undefined ? ["all"]:selectedEquipment,
+      "call_type": selectedCallType[0]===undefined ? [0, 1, 2, 3, 5]:selectedCallType,
+      "remark": selectedRemark[0]===undefined ? [0, 1, 2, 3]:selectedRemark,
+      "start_date": (startDate===null &&endDate ===null )? null:startDate,
+      "end_date": (startDate===null &&endDate ===null )? null:endDate
+    }
+    try {
+      const response = await post(`/api/sortByFinalReport`,payload);
+      setData(transformData(response));
+      setDataLoading(false)
+      setFilterColour("#AAE3AA");
+      setIsEnabled(false);
+      setErrorMessage(false);
+
+    } catch (error) {
+      setErrorMessage(true);
+      setDataLoading(true);
+    }
+    finally{
+      setLoading(false);
+    }
+  }
+
+  async function clearFilteredData(){
+    setDataLoading(true);
+    const payload={
+      "customer_id": 0,
+      "location": ["all"],
+      "equipment_name": ["all"],
+      "call_type": [0, 1, 2, 3, 5],
+      "remark": [0, 1, 2, 3],
+      "start_date": null,
+      "end_date": null
+    }
+    try {
+      const response = await post(`/api/sortByFinalReport`,payload);
+      setFilterColour("#ffffff");
+      setData(transformData(response));
+      setDataLoading(false);
+    setSelectedServiceEnggId(null);
+    setSelectedLocations([]);
+    setSelectedCustomerId(0);
+    setCustomers([]);
+    setEndDate(null);
+    setStartDate(null);
+    setSelectedRemark([]);
+    setSelectedCallType([]);
+    setSearchText("");
+    setUserText("");
+    setSelectedEquipent([]);
+    setCustomers([]);
+    setUsers([]);
+    setErrorMessage(false);
+   
+    } catch (error) {
+      console.error("Error Remove Filter", error);
+      setDataLoading(true);
+    }
+    finally{
+      setDataLoading(false);
+      setIsEnabled(false);
+    }
+  }
 
   useEffect(() => {
     if (userText.length > 0) {
@@ -212,6 +292,35 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
     }
   }, [Enabled]);
 
+ 
+let buttonTextStartDate="From Date";
+let buttonTextEndDate="To Date";
+
+const formatDate = (date) => {
+  if (!date) return "No date selected";
+  return date.toISOString().split("T")[0]; // Format to YYYY-MM-DD
+};
+
+  const onStartDateChange = (event, selectedDate) => {
+    if (selectedDate) {
+      setStartDate(formatDate(selectedDate));
+      buttonTextStartDate= `${formatDate(selectedDate)}`;
+      
+    }
+    setShowStartDate(false); // Hide picker after selection on Android
+  };
+
+  console.log(startDate);
+  
+
+  const onEndDateChange = (event, selectedDate) => {
+    if (selectedDate) {
+      setEndDate(formatDate(selectedDate));
+      buttonTextEndDate =`${formatDate(selectedDate)}`;
+    }
+    setShowEndDate(false); // Hide picker after selection on Android
+  };
+
   return Enabled ? (
     <View style={styles.overlayContainer}>
     <TouchableOpacity onPress={closeSheet} />
@@ -227,7 +336,8 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }} style={{ width: "100%" }}>
         {/* Wrap dropdowns inside a ScrollView */}
         <View style={styles.container}>
-        {(open === false && remarkOpen === false && callTypeOpen === false && locationOpen === false && searchOpen === false) && (
+          {ErrorMessage===true &&<Text style={{color:"red" ,fontSize:16,marginBottom:5}}>Record not found for applied filters</Text>}
+        {/* {(open === false && remarkOpen === false && callTypeOpen === false && locationOpen === false && searchOpen === false) && (
           <>
             
               <Text style={styles.label}>Service Engineer</Text>
@@ -246,7 +356,7 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
               />
            
           </>
-        )}
+        )} */}
 
 {(open === false && remarkOpen === false && callTypeOpen === false && locationOpen === false && userOpen === false) && (
           <>
@@ -345,9 +455,101 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
               style={{ marginBottom: remarkOpen ? 220 : 5 }}
               dropDownContainerStyle={{ maxHeight: 250 }}
               
-            />
+            /><View
+  style={{
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    marginBottom: 30,
+  }}
+>
+  {/* Start Date Picker */}
+  <View style={{ flex: 1, alignItems: "center" }}>
+    <TouchableOpacity
+      style={{
+        width: 120, // Fixed width
+        height: 60, // Fixed height
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#000",
+        borderRadius: 8,
+        paddingHorizontal: 5,
+        paddingVertical: 10,
+        marginVertical: 5,
+        backgroundColor: "white",
+      }}
+      onPress={() => setShowStartDate(true)}
+    >
+      <Image
+        source={require("../assets/svg/calender.png")}
+        style={[styles.image, { marginBottom: 5 }]} // Ensure spacing
+      />
+      <Text style={{ textAlign: "center", color: "black", fontSize: 12 }}>
+        {buttonTextStartDate || "Select Date"}
+      </Text>
+    </TouchableOpacity>
+    {showStartDate && (
+      <DateTimePicker
+        value={startDate ? new Date(startDate) : new Date()}
+        mode="date"
+        display="calendar"
+        onChange={onStartDateChange}
+      />
+    )}
+    {startDate && (
+      <Text style={{ textAlign: "center", color: "black", marginTop: 5 }}>
+        {startDate}
+      </Text>
+    )}
+  </View>
+
+  {/* End Date Picker */}
+  <View style={{ flex: 1, alignItems: "center" }}>
+    <TouchableOpacity
+      style={{
+        width: 120, // Fixed width
+        height: 60, // Fixed height
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#000",
+        borderRadius: 8,
+        paddingHorizontal: 5,
+        paddingVertical: 10,
+        marginVertical: 5,
+        backgroundColor: "white",
+      }}
+      onPress={() => setShowEndDate(true)}
+    >
+      <Image
+        source={require("../assets/svg/calender.png")}
+        style={[styles.image, { marginBottom: 5 }]} // Ensure spacing
+      />
+      <Text style={{ textAlign: "center", color: "black", fontSize: 12 }}>
+        {buttonTextEndDate || "Select Date"}
+      </Text>
+    </TouchableOpacity>
+    {showEnddate && (
+      <DateTimePicker
+        value={endDate ? new Date(endDate) : new Date()}
+        mode="date"
+        display="calendar"
+        onChange={onEndDateChange}
+      />
+    )}
+    {endDate && (
+      <Text style={{ textAlign: "center", color: "black", marginTop: 5 }}>
+        {endDate}
+      </Text>
+    )}
+  </View>
+</View>
+
           </>
         )}
+
   
         {(remarkOpen === false && callTypeOpen === false && open === false && searchOpen === false && locationOpen === false) && (
           <>
@@ -365,7 +567,7 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
                   marginVertical: 5,
                   backgroundColor: "black"
                 }}
-                onPress={() => console.log("Apply clicked")}
+                onPress={fetchFilteredData}
               >
                 <Text style={{ textAlign: "center", color: "white" }}>Apply</Text>
               </TouchableOpacity>
@@ -383,13 +585,14 @@ const BottomSheet = ({ Enabled, setIsEnabled, userType}) => {
                   paddingVertical: 10,
                   marginVertical: 5
                 }}
-                onPress={() => console.log("Remove Filter clicked")}
+                onPress={clearFilteredData}
               >
                 <Text style={{ textAlign: "center", color: "white" }}>Remove Filter</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
+        
          </View>
       </ScrollView>
     </Animated.View>
@@ -411,7 +614,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
   },
-  
+  image: {
+    width: 6,
+    height: 6,
+    alignSelf: "center",
+    paddingHorizontal:10,
+    marginLeft:4,
+    paddingVertical:9,
+    color:"black"
+  },
   selectedText: {
     marginTop: 10,
     fontSize: 16,
